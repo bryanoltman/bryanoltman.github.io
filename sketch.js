@@ -22,7 +22,7 @@ class Flocker {
    *
    * @param {[Flocker]} flock
    * @param {number} radius
-   * @returns
+   * @returns {[Flocker]} members of flock within radius of this
    */
   findNeighbors (flock, radius) {
     let position = this.position
@@ -143,7 +143,7 @@ class Flocker {
   /**
    * @param {[Flocker]} flock
    *
-   * @return {Vector} the alignment vector
+   * @return {Vector} a steering vector in the average direction of neighboring flockers
    */
   align (flock) {
     let neighborDistance = 50
