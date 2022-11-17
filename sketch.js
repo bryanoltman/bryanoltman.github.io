@@ -1,4 +1,5 @@
-// Heavily based on https://p5js.org/examples/hello-p5-flocking.html and https://users.monash.edu/~cema/courses/FIT3094/lecturePDFs/lecture4a_VectorsSteering.pdf
+// A demonstration of Craig Reynlods' Boids (http://www.red3d.com/cwr/boids/)
+// Heavily inspired on https://p5js.org/examples/hello-p5-flocking.html and https://users.monash.edu/~cema/courses/FIT3094/lecturePDFs/lecture4a_VectorsSteering.pdf
 
 let flock = []
 let flockSize = 200
