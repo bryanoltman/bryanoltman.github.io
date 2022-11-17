@@ -114,9 +114,8 @@ class Flocker {
     let averageDirectionAwayFromNeighbors = p5.Vector.div(
       neighbors.reduce(function (accumulator, neighbor) {
         let diff = p5.Vector.sub(position, neighbor.position)
-
-        // Weight by distance
         diff.normalize()
+        // Give closer neighbors a higher weight.
         diff.div(position.dist(neighbor.position))
 
         accumulator.add(diff)
