@@ -261,6 +261,11 @@
 
 <div class="readout">
   <div class="stat-card">
+    <div class="label">Events/sec</div>
+    <div class="value highlight" id="stat-eps">0</div>
+    <span class="unit">e/s</span>
+  </div>
+  <div class="stat-card">
     <div class="label">Current</div>
     <div class="value highlight" id="stat-current">&mdash;</div>
     <span class="unit">Hz</span>
@@ -335,6 +340,9 @@ const COALESCED_HISTORY_MAX = 120;
 let coalescedHistory = [];
 let lastCoalescedCount = 0;
 
+// Event timestamps for events-per-second counter (performance.now() values)
+let eventTimestamps = [];
+
 // Known polling rates and their tolerance bands (Hz → label)
 const KNOWN_RATES = [125, 250, 500, 1000, 2000, 4000, 8000];
 
@@ -352,6 +360,7 @@ const chkCoalesced   = document.getElementById("chk-coalesced");
 const coalescedCanvas = document.getElementById("coalesced-chart");
 const coalescedCtx    = coalescedCanvas.getContext("2d");
 const coalescedCountEl = document.getElementById("coalesced-count");
+const statEps      = document.getElementById("stat-eps");
 
 // ── Trail dots ─────────────────────────────────────────────────────
 const TRAIL_MAX = 40;
@@ -401,14 +410,17 @@ function handlePointerMove(e) {
   addTrailDot(e.clientX - rect.left, e.clientY - rect.top);
 
   let frameCount = 1;
+  const now = performance.now();
   if (useCoalesced && e.getCoalescedEvents) {
     const coalesced = e.getCoalescedEvents();
     frameCount = coalesced.length;
     for (const ce of coalesced) {
       recordTimestamp(ce.timeStamp);
+      eventTimestamps.push(now);
     }
   } else {
     recordTimestamp(e.timeStamp);
+    eventTimestamps.push(now);
   }
 
   // Track coalesced count per frame
@@ -603,6 +615,15 @@ function updateUI() {
   const n = intervals.length;
   statSamples.textContent = n;
 
+  // Events per second: count timestamps within the last 1000ms
+  const now = performance.now();
+  const cutoff = now - 1000;
+  // Trim old entries (timestamps are monotonically increasing)
+  while (eventTimestamps.length && eventTimestamps[0] < cutoff) {
+    eventTimestamps.shift();
+  }
+  statEps.textContent = eventTimestamps.length;
+
   if (n >= 2) {
     // Current: rolling window of last 20 samples
     const recent = intervals.slice(-20);
@@ -644,6 +665,8 @@ btnReset.addEventListener("click", () => {
   lastTime  = null;
   coalescedHistory = [];
   lastCoalescedCount = 0;
+  eventTimestamps = [];
+  statEps.textContent = "0";
   statCurrent.innerHTML = "&mdash;";
   statAvg.innerHTML     = "&mdash;";
   statMedian.innerHTML  = "&mdash;";
