@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mouse Polling Rate Test</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --border: #2a2d3a;
+    --text: #e0e0e6;
+    --text-dim: #8888a0;
+    --accent: #6c8aff;
+    --accent-glow: rgba(108, 138, 255, 0.25);
+    --green: #4ade80;
+    --yellow: #facc15;
+    --red: #f87171;
+  }
+
+  body {
+    font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem 1rem;
+    user-select: none;
+  }
+
+  h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    letter-spacing: -0.02em;
+  }
+
+  .subtitle {
+    color: var(--text-dim);
+    font-size: 0.8rem;
+    margin-bottom: 1.5rem;
+  }
+
+  /* ---------- tracking area ---------- */
+  #track-area {
+    width: min(720px, 100%);
+    height: 260px;
+    background: var(--surface);
+    border: 2px dashed var(--border);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    cursor: crosshair;
+    transition: border-color 0.2s;
+  }
+
+  #track-area.active {
+    border-color: var(--accent);
+    box-shadow: 0 0 30px var(--accent-glow);
+  }
+
+  #track-area .prompt {
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+
+  #track-area.active .prompt { opacity: 0; }
+
+  /* trail dots */
+  .trail-dot {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    pointer-events: none;
+    opacity: 0.7;
+    transition: opacity 0.5s;
+  }
+
+  /* ---------- live readout ---------- */
+  .readout {
+    display: flex;
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem 1.5rem;
+    text-align: center;
+    min-width: 130px;
+  }
+
+  .stat-card .label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    margin-bottom: 0.35rem;
+  }
+
+  .stat-card .value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .stat-card .unit {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    margin-left: 2px;
+  }
+
+  .stat-card .value.highlight { color: var(--accent); }
+
+  /* ---------- histogram ---------- */
+  .chart-section {
+    width: min(720px, 100%);
+    margin-top: 1.5rem;
+  }
+
+  .chart-section h2 {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    margin-bottom: 0.5rem;
+  }
+
+  #histogram {
+    width: 100%;
+    height: 160px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+  }
+
+  /* ---------- detected rate ---------- */
+  .detected {
+    margin-top: 1.25rem;
+    padding: 0.75rem 1.5rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 0.85rem;
+    text-align: center;
+  }
+
+  .detected .rate {
+    font-weight: 700;
+    font-size: 1.1rem;
+  }
+
+  .detected .rate.green  { color: var(--green); }
+  .detected .rate.yellow { color: var(--yellow); }
+  .detected .rate.red    { color: var(--red); }
+
+  /* ---------- controls ---------- */
+  .controls {
+    margin-top: 1.25rem;
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+  }
+
+  button {
+    font-family: inherit;
+    font-size: 0.8rem;
+    padding: 0.5rem 1.25rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+  }
+
+  button:hover {
+    background: var(--border);
+    border-color: var(--accent);
+  }
+
+  .toggle-label {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    cursor: pointer;
+  }
+
+  .toggle-label input { accent-color: var(--accent); }
+
+  .info {
+    width: min(720px, 100%);
+    margin-top: 1.5rem;
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+
+  .info p + p { margin-top: 0.5rem; }
+</style>
+</head>
+<body>
+
+<h1>Mouse Polling Rate Test</h1>
+<p class="subtitle">Move your mouse inside the box below</p>
+
+<div id="track-area">
+  <span class="prompt">Move your mouse here to begin</span>
+</div>
+
+<div class="readout">
+  <div class="stat-card">
+    <div class="label">Current</div>
+    <div class="value highlight" id="stat-current">&mdash;</div>
+    <span class="unit">Hz</span>
+  </div>
+  <div class="stat-card">
+    <div class="label">Average</div>
+    <div class="value" id="stat-avg">&mdash;</div>
+    <span class="unit">Hz</span>
+  </div>
+  <div class="stat-card">
+    <div class="label">Median</div>
+    <div class="value" id="stat-median">&mdash;</div>
+    <span class="unit">Hz</span>
+  </div>
+  <div class="stat-card">
+    <div class="label">Samples</div>
+    <div class="value" id="stat-samples">0</div>
+    <span class="unit"></span>
+  </div>
+</div>
+
+<div class="chart-section">
+  <h2>Interval distribution</h2>
+  <canvas id="histogram"></canvas>
+</div>
+
+<div class="detected" id="detected-rate">
+  Waiting for data&hellip;
+</div>
+
+<div class="controls">
+  <button id="btn-reset">Reset</button>
+  <label class="toggle-label">
+    <input type="checkbox" id="chk-coalesced" checked>
+    Use coalesced events (more accurate)
+  </label>
+</div>
+
+<div class="info">
+  <p>
+    <strong>How it works:</strong> This page measures the time between consecutive
+    <code>pointermove</code> events reported by your browser. With "coalesced events"
+    enabled, it reads every hardware report the browser received between frames via
+    <code>getCoalescedEvents()</code>, giving a truer picture of hardware polling rate.
+  </p>
+  <p>
+    <strong>Tips:</strong> Move the mouse in steady circles or figure-eights inside
+    the box. Avoid stopping — pauses inflate the measured interval. Wireless mice,
+    Bluetooth, and power-saving modes may reduce the effective rate. Results depend
+    on browser, OS compositor, and USB/wireless stack.
+  </p>
+</div>
+
+<script>
+"use strict";
+
+// ── State ──────────────────────────────────────────────────────────
+const MAX_SAMPLES  = 4000;   // rolling window
+const GAP_THRESH   = 30;     // ms — ignore intervals longer than this (mouse stopped)
+const MIN_INTERVAL = 0.05;   // ms — reject impossibly short intervals (duplicates)
+
+let intervals  = [];          // raw interval values in ms
+let lastTime   = null;
+let useCoalesced = true;
+
+// Known polling rates and their tolerance bands (Hz → label)
+const KNOWN_RATES = [125, 250, 500, 1000, 2000, 4000, 8000];
+
+// ── DOM refs ───────────────────────────────────────────────────────
+const trackArea    = document.getElementById("track-area");
+const statCurrent  = document.getElementById("stat-current");
+const statAvg      = document.getElementById("stat-avg");
+const statMedian   = document.getElementById("stat-median");
+const statSamples  = document.getElementById("stat-samples");
+const detectedEl   = document.getElementById("detected-rate");
+const canvas       = document.getElementById("histogram");
+const ctx          = canvas.getContext("2d");
+const btnReset     = document.getElementById("btn-reset");
+const chkCoalesced = document.getElementById("chk-coalesced");
+
+// ── Trail dots ─────────────────────────────────────────────────────
+const TRAIL_MAX = 40;
+const trailDots = [];
+
+function addTrailDot(x, y) {
+  const dot = document.createElement("div");
+  dot.className = "trail-dot";
+  dot.style.left = (x - 3) + "px";
+  dot.style.top  = (y - 3) + "px";
+  trackArea.appendChild(dot);
+  trailDots.push(dot);
+
+  if (trailDots.length > TRAIL_MAX) {
+    const old = trailDots.shift();
+    old.remove();
+  }
+
+  // Fade out after a moment
+  requestAnimationFrame(() => {
+    dot.style.opacity = "0";
+    setTimeout(() => dot.remove(), 500);
+    const idx = trailDots.indexOf(dot);
+    if (idx !== -1) trailDots.splice(idx, 1);
+  });
+}
+
+// ── Core measurement ───────────────────────────────────────────────
+function recordTimestamp(t) {
+  if (lastTime !== null) {
+    const dt = t - lastTime;
+    if (dt >= MIN_INTERVAL && dt <= GAP_THRESH) {
+      intervals.push(dt);
+      if (intervals.length > MAX_SAMPLES) {
+        intervals = intervals.slice(-MAX_SAMPLES);
+      }
+    }
+  }
+  lastTime = t;
+}
+
+function handlePointerMove(e) {
+  trackArea.classList.add("active");
+
+  // Visual trail (use event coordinates relative to track area)
+  const rect = trackArea.getBoundingClientRect();
+  addTrailDot(e.clientX - rect.left, e.clientY - rect.top);
+
+  if (useCoalesced && e.getCoalescedEvents) {
+    const coalesced = e.getCoalescedEvents();
+    for (const ce of coalesced) {
+      recordTimestamp(ce.timeStamp);
+    }
+  } else {
+    recordTimestamp(e.timeStamp);
+  }
+}
+
+trackArea.addEventListener("pointermove", handlePointerMove);
+
+trackArea.addEventListener("pointerleave", () => {
+  // Gap in data — reset lastTime so we don't count re-entry interval
+  lastTime = null;
+  trackArea.classList.remove("active");
+});
+
+// ── Statistics ─────────────────────────────────────────────────────
+function median(arr) {
+  if (!arr.length) return 0;
+  const s = arr.slice().sort((a, b) => a - b);
+  const mid = Math.floor(s.length / 2);
+  return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
+}
+
+function mean(arr) {
+  if (!arr.length) return 0;
+  let sum = 0;
+  for (let i = 0; i < arr.length; i++) sum += arr[i];
+  return sum / arr.length;
+}
+
+function detectRate(avgHz) {
+  // Find nearest known rate within 20% tolerance
+  let best = null;
+  let bestDist = Infinity;
+  for (const rate of KNOWN_RATES) {
+    const dist = Math.abs(avgHz - rate) / rate;
+    if (dist < 0.20 && dist < bestDist) {
+      best = rate;
+      bestDist = dist;
+    }
+  }
+  return best;
+}
+
+// ── Histogram rendering ────────────────────────────────────────────
+function drawHistogram() {
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvas.clientWidth;
+  const h = canvas.clientHeight;
+  canvas.width  = w * dpr;
+  canvas.height = h * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  ctx.clearRect(0, 0, w, h);
+
+  if (intervals.length < 10) {
+    ctx.fillStyle = "#8888a0";
+    ctx.font = "12px 'SF Mono', monospace";
+    ctx.textAlign = "center";
+    ctx.fillText("Collecting data\u2026", w / 2, h / 2);
+    return;
+  }
+
+  // Bin intervals into a histogram
+  // Range: 0 to 16 ms covers 62.5 Hz to beyond 8000 Hz
+  const binCount = 64;
+  const binMax   = 16;      // ms
+  const binWidth = binMax / binCount;
+  const bins = new Uint32Array(binCount);
+
+  for (let i = 0; i < intervals.length; i++) {
+    const idx = Math.min(Math.floor(intervals[i] / binWidth), binCount - 1);
+    bins[idx]++;
+  }
+
+  let peak = 0;
+  for (let i = 0; i < binCount; i++) {
+    if (bins[i] > peak) peak = bins[i];
+  }
+  if (peak === 0) return;
+
+  const pad    = { top: 10, right: 12, bottom: 28, left: 40 };
+  const plotW  = w - pad.left - pad.right;
+  const plotH  = h - pad.top - pad.bottom;
+  const barW   = plotW / binCount;
+
+  // Bars
+  for (let i = 0; i < binCount; i++) {
+    const barH = (bins[i] / peak) * plotH;
+    const x = pad.left + i * barW;
+    const y = pad.top + plotH - barH;
+
+    // Color by interval: low interval = high Hz = green
+    const ms = (i + 0.5) * binWidth;
+    let color;
+    if      (ms <= 1.5)  color = "#4ade80";  // >= ~667 Hz
+    else if (ms <= 4)    color = "#6c8aff";  // ~250-667 Hz
+    else if (ms <= 8)    color = "#facc15";  // ~125-250 Hz
+    else                 color = "#f87171";  // < 125 Hz
+
+    ctx.fillStyle = color;
+    ctx.fillRect(x, y, Math.max(barW - 1, 1), barH);
+  }
+
+  // X-axis labels (ms)
+  ctx.fillStyle = "#8888a0";
+  ctx.font = "10px 'SF Mono', monospace";
+  ctx.textAlign = "center";
+  for (let ms = 0; ms <= binMax; ms += 2) {
+    const x = pad.left + (ms / binMax) * plotW;
+    ctx.fillText(ms + "ms", x, h - 6);
+  }
+
+  // Y-axis label
+  ctx.save();
+  ctx.translate(10, pad.top + plotH / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.textAlign = "center";
+  ctx.fillText("count", 0, 0);
+  ctx.restore();
+
+  // Reference lines for common polling rates
+  ctx.setLineDash([4, 4]);
+  ctx.lineWidth = 1;
+  const refs = [
+    { hz: 125,  label: "125" },
+    { hz: 500,  label: "500" },
+    { hz: 1000, label: "1k" },
+  ];
+  for (const ref of refs) {
+    const ms = 1000 / ref.hz;
+    if (ms > binMax) continue;
+    const x = pad.left + (ms / binMax) * plotW;
+    ctx.strokeStyle = "rgba(255,255,255,0.15)";
+    ctx.beginPath();
+    ctx.moveTo(x, pad.top);
+    ctx.lineTo(x, pad.top + plotH);
+    ctx.stroke();
+
+    ctx.fillStyle = "rgba(255,255,255,0.35)";
+    ctx.textAlign = "center";
+    ctx.fillText(ref.label + "Hz", x, pad.top - 1);
+  }
+  ctx.setLineDash([]);
+}
+
+// ── UI update loop ─────────────────────────────────────────────────
+function updateUI() {
+  const n = intervals.length;
+  statSamples.textContent = n;
+
+  if (n >= 2) {
+    // Current: rolling window of last 20 samples
+    const recent = intervals.slice(-20);
+    const curHz  = 1000 / mean(recent);
+    statCurrent.textContent = Math.round(curHz);
+
+    const avgHz = 1000 / mean(intervals);
+    statAvg.textContent = Math.round(avgHz);
+
+    const medHz = 1000 / median(intervals);
+    statMedian.textContent = Math.round(medHz);
+
+    // Detected rate
+    if (n >= 100) {
+      const detected = detectRate(medHz);
+      if (detected) {
+        let cls = "green";
+        if (detected <= 250) cls = "yellow";
+        if (detected <= 125) cls = "red";
+        detectedEl.innerHTML =
+          `Detected polling rate: <span class="rate ${cls}">${detected} Hz</span>`;
+      } else {
+        detectedEl.innerHTML =
+          `Estimated rate: <span class="rate">${Math.round(medHz)} Hz</span> (non-standard)`;
+      }
+    }
+  }
+
+  drawHistogram();
+  requestAnimationFrame(updateUI);
+}
+
+requestAnimationFrame(updateUI);
+
+// ── Controls ───────────────────────────────────────────────────────
+btnReset.addEventListener("click", () => {
+  intervals = [];
+  lastTime  = null;
+  statCurrent.innerHTML = "&mdash;";
+  statAvg.innerHTML     = "&mdash;";
+  statMedian.innerHTML  = "&mdash;";
+  statSamples.textContent = "0";
+  detectedEl.innerHTML  = "Waiting for data&hellip;";
+  trackArea.classList.remove("active");
+  for (const dot of trailDots) dot.remove();
+  trailDots.length = 0;
+});
+
+chkCoalesced.addEventListener("change", (e) => {
+  useCoalesced = e.target.checked;
+  // Reset data when toggling — different measurement basis
+  btnReset.click();
+});
+</script>
+</body>
+</html>
