@@ -87,6 +87,36 @@
     transition: opacity 0.5s;
   }
 
+  /* ---------- coalesced bar chart ---------- */
+  #coalesced-chart {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 56px;
+    pointer-events: none;
+    border-radius: 0 0 10px 10px;
+  }
+
+  .coalesced-badge {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .coalesced-badge .count {
+    font-weight: 700;
+    color: var(--accent);
+    font-size: 0.85rem;
+  }
+
+  #track-area.active .coalesced-badge { opacity: 1; }
+
   /* ---------- live readout ---------- */
   .readout {
     display: flex;
@@ -223,6 +253,10 @@
 
 <div id="track-area">
   <span class="prompt">Move your mouse here to begin</span>
+  <canvas id="coalesced-chart"></canvas>
+  <div class="coalesced-badge" id="coalesced-badge">
+    <span class="count" id="coalesced-count">0</span> events/frame
+  </div>
 </div>
 
 <div class="readout">
@@ -296,6 +330,11 @@ let intervals  = [];          // raw interval values in ms
 let lastTime   = null;
 let useCoalesced = true;
 
+// Coalesced events per pointermove frame (rolling window for the mini chart)
+const COALESCED_HISTORY_MAX = 120;
+let coalescedHistory = [];
+let lastCoalescedCount = 0;
+
 // Known polling rates and their tolerance bands (Hz → label)
 const KNOWN_RATES = [125, 250, 500, 1000, 2000, 4000, 8000];
 
@@ -309,7 +348,10 @@ const detectedEl   = document.getElementById("detected-rate");
 const canvas       = document.getElementById("histogram");
 const ctx          = canvas.getContext("2d");
 const btnReset     = document.getElementById("btn-reset");
-const chkCoalesced = document.getElementById("chk-coalesced");
+const chkCoalesced   = document.getElementById("chk-coalesced");
+const coalescedCanvas = document.getElementById("coalesced-chart");
+const coalescedCtx    = coalescedCanvas.getContext("2d");
+const coalescedCountEl = document.getElementById("coalesced-count");
 
 // ── Trail dots ─────────────────────────────────────────────────────
 const TRAIL_MAX = 40;
@@ -358,15 +400,23 @@ function handlePointerMove(e) {
   const rect = trackArea.getBoundingClientRect();
   addTrailDot(e.clientX - rect.left, e.clientY - rect.top);
 
+  let frameCount = 1;
   if (useCoalesced && e.getCoalescedEvents) {
     const coalesced = e.getCoalescedEvents();
+    frameCount = coalesced.length;
     for (const ce of coalesced) {
       recordTimestamp(ce.timeStamp);
     }
   } else {
     recordTimestamp(e.timeStamp);
   }
-}
+
+  // Track coalesced count per frame
+  lastCoalescedCount = frameCount;
+  coalescedHistory.push(frameCount);
+  if (coalescedHistory.length > COALESCED_HISTORY_MAX) {
+    coalescedHistory.shift();
+  }
 
 trackArea.addEventListener("pointermove", handlePointerMove);
 
@@ -507,6 +557,46 @@ function drawHistogram() {
   ctx.setLineDash([]);
 }
 
+// ── Coalesced bar chart (overlay inside tracking area) ─────────────
+function drawCoalescedChart() {
+  const dpr = window.devicePixelRatio || 1;
+  const w = coalescedCanvas.clientWidth;
+  const h = coalescedCanvas.clientHeight;
+  coalescedCanvas.width  = w * dpr;
+  coalescedCanvas.height = h * dpr;
+  coalescedCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  coalescedCtx.clearRect(0, 0, w, h);
+
+  const hist = coalescedHistory;
+  if (!hist.length) return;
+
+  // Update the badge with the latest count
+  coalescedCountEl.textContent = lastCoalescedCount;
+
+  // Find peak for scaling (minimum 4 so single-event bars aren't full height)
+  let peak = 4;
+  for (let i = 0; i < hist.length; i++) {
+    if (hist[i] > peak) peak = hist[i];
+  }
+
+  const barW = Math.max(w / COALESCED_HISTORY_MAX, 2);
+  const gap  = 1;
+  // Draw bars right-aligned (newest on the right)
+  const startX = w - hist.length * barW;
+
+  for (let i = 0; i < hist.length; i++) {
+    const count = hist[i];
+    const barH  = (count / peak) * (h - 4);
+    const x     = startX + i * barW;
+    const y     = h - barH;
+
+    // Color intensity scales with count
+    const alpha = 0.25 + 0.55 * (count / peak);
+    coalescedCtx.fillStyle = `rgba(108, 138, 255, ${alpha})`;
+    coalescedCtx.fillRect(x, y, Math.max(barW - gap, 1), barH);
+  }
+}
+
 // ── UI update loop ─────────────────────────────────────────────────
 function updateUI() {
   const n = intervals.length;
@@ -541,6 +631,7 @@ function updateUI() {
   }
 
   drawHistogram();
+  drawCoalescedChart();
   requestAnimationFrame(updateUI);
 }
 
@@ -550,10 +641,13 @@ requestAnimationFrame(updateUI);
 btnReset.addEventListener("click", () => {
   intervals = [];
   lastTime  = null;
+  coalescedHistory = [];
+  lastCoalescedCount = 0;
   statCurrent.innerHTML = "&mdash;";
   statAvg.innerHTML     = "&mdash;";
   statMedian.innerHTML  = "&mdash;";
   statSamples.textContent = "0";
+  coalescedCountEl.textContent = "0";
   detectedEl.innerHTML  = "Waiting for data&hellip;";
   trackArea.classList.remove("active");
   for (const dot of trailDots) dot.remove();
