@@ -417,6 +417,7 @@ function handlePointerMove(e) {
   if (coalescedHistory.length > COALESCED_HISTORY_MAX) {
     coalescedHistory.shift();
   }
+}
 
 trackArea.addEventListener("pointermove", handlePointerMove);
 
