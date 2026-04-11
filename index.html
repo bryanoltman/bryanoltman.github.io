@@ -1,151 +1,235 @@
-
-<html>
+<!doctype html>
+<html lang="en">
   <head>
-    <meta
-      name="viewport"
-      content="width=device-width, minimum-scale=1.0, maximum-scale=1.0"
-    />
-
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Bryan Oltman</title>
-
-    <style type="text/css">
-      body {
-        font-family: "Source Code Pro", monospace;
-        margin: 15px;
+    <meta
+      name="description"
+      content="Bryan Oltman — Brooklyn-based software engineer"
+    />
+    <meta property="og:title" content="Bryan Oltman" />
+    <meta
+      property="og:description"
+      content="Brooklyn-based software engineer currently working on Chrome for Mac."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://bryanoltman.com" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;600&amp;display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #fafafa;
+        --fg: #1a1a1a;
+        --muted: #6b6b6b;
+        --accent: #0a66c2;
+        --rule: #e5e5e5;
       }
-
-      h4 {
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #111;
+          --fg: #e8e8e8;
+          --muted: #9a9a9a;
+          --accent: #6ea8fe;
+          --rule: #2a2a2a;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        -webkit-text-size-adjust: 100%;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--fg);
+        font-family:
+          "Source Code Pro", ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 15px;
+        line-height: 1.6;
+      }
+      main {
+        max-width: 46rem;
+        margin: 0 auto;
+        padding: 3rem 1.25rem 4rem;
+      }
+      header {
+        margin-bottom: 2.5rem;
+      }
+      h1 {
+        font-size: 1.75rem;
+        font-weight: 600;
+        margin: 0 0 0.5rem;
+        letter-spacing: -0.01em;
+      }
+      section {
+        margin-top: 2.25rem;
+      }
+      section + section {
+        border-top: 1px solid var(--rule);
+        padding-top: 2rem;
+      }
+      h2 {
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+        margin: 0 0 0.9rem;
+      }
+      ul {
+        list-style: none;
+        padding: 0;
         margin: 0;
       }
-
       li {
-        margin-top: 3px;
-        margin-bottom: 3px;
+        margin: 0.55rem 0;
       }
-
-      li p {
-        margin: 0px;
+      li ul {
+        margin-top: 0.25rem;
+        padding-left: 1.25rem;
+      }
+      li ul li {
+        margin: 0.15rem 0;
+        color: var(--muted);
+        font-size: 0.92em;
+      }
+      a {
+        color: var(--accent);
+        text-decoration: none;
+        border-bottom: 1px solid transparent;
+        transition: border-color 120ms ease;
+      }
+      a:hover,
+      a:focus {
+        border-bottom-color: var(--accent);
+      }
+      .badge {
+        display: inline-block;
+        font-size: 0.72rem;
+        padding: 0.05rem 0.4rem;
+        margin-left: 0.4rem;
+        color: var(--muted);
+        border: 1px solid var(--rule);
+        border-radius: 3px;
+        vertical-align: 0.1em;
+      }
+      .date {
+        color: var(--muted);
+        font-size: 0.92em;
+        display: inline-block;
+      }
+      @media (max-width: 480px) {
+        main {
+          padding: 2rem 1rem 3rem;
+        }
+        h1 {
+          font-size: 1.5rem;
+        }
       }
     </style>
-    <link
-      href="https://fonts.googleapis.com/css?family=Source+Code+Pro"
-      rel="stylesheet"
-      type="text/css"
-    />
-    <script>
-      (function (i, s, o, g, r, a, m) {
-        i["GoogleAnalyticsObject"] = r;
-        (i[r] =
-          i[r] ||
-          function () {
-            (i[r].q = i[r].q || []).push(arguments);
-          }),
-          (i[r].l = 1 * new Date());
-        (a = s.createElement(o)), (m = s.getElementsByTagName(o)[0]);
-        a.async = 1;
-        a.src = g;
-        m.parentNode.insertBefore(a, m);
-      })(
-        window,
-        document,
-        "script",
-        "https://www.google-analytics.com/analytics.js",
-        "ga"
-      );
-
-      ga("create", "UA-48128448-1", "bryanoltman.com");
-      ga("send", "pageview");
-    </script>
   </head>
-
   <body>
-    <h2>Bryan Oltman</h2>
-    <p>
-      I'm a Brooklyn-based programmer who likes to play guitar and ride my bike
-    </p>
+    <main>
+      <header>
+        <h1>Bryan Oltman</h1>
+      </header>
 
-    <h3>Work</h3>
-    <h4>Personal</h4>
-    <ul>
-      <li>
-        <p>
-          I made a landmark guessing game for iOS called
-          <a href="https://apps.apple.com/us/app/landmarkle/id6444093760"
-            >Landmarkle</a
-          >. It's free and fun!
-        </p>
-      </li>
-      <li>
-        <p>
-          I open-sourced an iOS calendar component named
-          <a href="https://github.com/blueapron/colander">Colander</a>
-          during my time at Blue Apron.
-        </p>
-      </li>
-      <li>
-        <p>
-          I made an iOS version of
-          <a href="http://listen.hatnote.com">Listen to Wikipedia</a> in 2014.
-          Go ahead and
-          <a
-            href="http://itunes.apple.com/us/app/listen-to-wikipedia/id832934300?ls=1&mt=8"
-            >download it for free</a
-          >.
-        </p>
-      </li>
-      <li>
-        <p>
-          I wrote and maintain
-          <a href="http://github.com/bryanoltman/CAAnimation-EasingEquations"
-            >CAAnimation-EasingEquations</a
-          >, which adds <a href="http://easings.net">easing functions</a> to
-          iOS.
-        </p>
-      </li>
-    </ul>
-    <h4>Employment History</h4>
-    <ul>
-      <li>
-        Founding Engineer at <a href="https://shorebird.dev">Shorebird</a>
-      </li>
-      <li>
-        Senior Software Engineer at <a href="http://google.com">Google</a>
+      <section>
+        <h2>Projects</h2>
         <ul>
-          <li>Tech Lead for Flutter@Google Application Architecture</li>
-          <li>(Previously) Material iOS</li>
+          <li>
+            <a href="https://apps.apple.com/us/app/landmarkle/id6444093760"
+              >Landmarkle</a
+            >
+            - A free (and fun!) landmark guessing game.
+            <div class="date">(2023)</div>
+          </li>
+          <li>
+            <a href="https://github.com/blueapron/colander">Colander</a> - an
+            iOS calendar component written in Swift.
+            <div class="date">(2018)</div>
+          </li>
+          <li>
+            <a
+              href="http://itunes.apple.com/us/app/listen-to-wikipedia/id832934300?ls=1&amp;mt=8"
+              >Listen to Wikipedia</a
+            >
+            - an iOS version of http://listen.hatnote.com.
+            <div class="date">(2014)</div>
+          </li>
+          <li>
+            <a href="http://github.com/bryanoltman/CAAnimation-EasingEquations"
+              >CAAnimation-EasingEquations</a
+            >
+            - adds <a href="http://easings.net">easing functions</a> to iOS.
+            <div class="date">(2014)</div>
+          </li>
         </ul>
-      </li>
-      <li>iOS Software Engineer at <a href="http://anchor.fm">Anchor</a></li>
-      <li>
-        Senior Software Engineer at
-        <a href="http://blueapron.com">Blue Apron</a>
-      </li>
-      <li>Mobile Engineer at <a href="http://compass.com">Compass</a></li>
-      <li>Mobile Engineer at <a href="http://dataminr.com">Dataminr</a></li>
-      <li>
-        Backend and Mobile Engineer at <a href="http://okcupid.com">OkCupid</a>
-      </li>
-      <li>
-        Windows and iOS Developer at
-        <a href="http://thirteen23.com">thirteen23</a>
-      </li>
-      <li>
-        Software Engineer at <a href="http://garmin.com">Garmin</a> on the
-        Online Map Technology team
-      </li>
-    </ul>
+      </section>
 
-    <h3>Links</h3>
-    <ul>
-      <li>
-        <a href="https://www.linkedin.com/in/bryanoltman/">LinkedIn (resume)</a>
-      </li>
-      <li><a href="http://github.com/bryanoltman">GitHub</a></li>
-      <li>
-        <a href="https://bsky.app/profile/boltman.bsky.social">BlueSky</a>
-      </li>
-      <li><a href="http://moltman.smugmug.com/">SmugMug</a></li>
-      <li><a href="mailto:me@bryanoltman.com">email</a></li>
-    </ul>
+      <section>
+        <h2>Experience</h2>
+        <ul>
+          <li>
+            Software Engineer at <a href="http://google.com">Google</a> on the
+            Chrome for Mac team<span class="badge">current</span>
+          </li>
+          <li>
+            Founding Engineer at <a href="https://shorebird.dev">Shorebird</a>
+          </li>
+          <li>
+            Senior Software Engineer at <a href="http://google.com">Google</a>
+            <ul>
+              <li>Tech Lead for Flutter@Google Application Architecture</li>
+              <li>Material iOS</li>
+            </ul>
+          </li>
+          <li>
+            iOS Software Engineer at <a href="http://anchor.fm">Anchor</a>
+          </li>
+          <li>
+            Senior Software Engineer at
+            <a href="http://blueapron.com">Blue Apron</a>
+          </li>
+          <li>Mobile Engineer at <a href="http://compass.com">Compass</a></li>
+          <li>Mobile Engineer at <a href="http://dataminr.com">Dataminr</a></li>
+          <li>
+            Backend and Mobile Engineer at
+            <a href="http://okcupid.com">OkCupid</a>
+          </li>
+          <li>
+            Windows and iOS Developer at
+            <a href="http://thirteen23.com">thirteen23</a>
+          </li>
+          <li>
+            Software Engineer at <a href="http://garmin.com">Garmin</a> on the
+            Online Map Technology team
+          </li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Elsewhere</h2>
+        <ul>
+          <li>
+            <a href="https://www.linkedin.com/in/bryanoltman/"
+              >LinkedIn (resume)</a
+            >
+          </li>
+          <li><a href="http://github.com/bryanoltman">GitHub</a></li>
+          <li>
+            <a href="https://bsky.app/profile/boltman.bsky.social">BlueSky</a>
+          </li>
+          <li><a href="http://moltman.smugmug.com/">SmugMug</a></li>
+          <li><a href="mailto:me@bryanoltman.com">email</a></li>
+        </ul>
+      </section>
+    </main>
   </body>
 </html>
