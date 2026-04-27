@@ -1,0 +1,3 @@
+[submodule "window-placement-demo"]
+	path = window-placement-demo
+	url = https://github.com/michaelwasserman/window-placement-demo
